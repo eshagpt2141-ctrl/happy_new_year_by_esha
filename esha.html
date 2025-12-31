@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Happy New Year ✨</title>
+
+<style>
+html,body{
+margin:0;padding:0;height:100%;
+overflow:hidden;
+font-family:'Georgia',serif;
+background:radial-gradient(circle at bottom,#020111,#000);
+}
+
+/* Stars */
+body::before{
+content:"";
+position:absolute;
+width:200%;
+height:200%;
+background:transparent url("https://raw.githubusercontent.com/JulianLaval/canvas-particle-network/master/img/stars.png") repeat;
+animation:stars 160s linear infinite;
+opacity:.7;
+}
+@keyframes stars{
+from{transform:translateY(0)}
+to{transform:translateY(-1200px)}
+}
+
+/* Overlay for sound */
+#startOverlay{
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+background:rgba(0,0,0,.88);
+color:white;
+display:flex;
+align-items:center;
+justify-content:center;
+z-index:999;
+font-size:26px;
+text-align:center;
+cursor:pointer;
+}
+
+/* Canvas */
+canvas{
+position:absolute;
+top:0;left:0;
+pointer-events:none;
+}
+
+/* Envelope */
+.envelope{
+position:absolute;
+width:390px;
+height:270px;
+background:linear-gradient(135deg,#fff,#ddd);
+left:50%;top:50%;
+transform:translate(-50%,-50%);
+border-radius:18px;
+box-shadow:0 35px 90px rgba(255,255,255,.45);
+cursor:pointer;
+z-index:10;
+animation:pulse 3s infinite;
+}
+@keyframes pulse{
+0%,100%{transform:translate(-50%,-50%) scale(1)}
+50%{transform:translate(-50%,-50%) scale(1.04)}
+}
+.envelope::before{
+content:"";
+position:absolute;
+width:100%;height:100%;
+background:linear-gradient(135deg,#fff,#ccc);
+clip-path:polygon(0 0,100% 0,50% 62%);
+border-radius:18px;
+}
+
+/* Cards */
+.card{
+position:absolute;
+width:280px;
+height:190px;
+background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(255,235,250,.95));
+backdrop-filter:blur(12px);
+border-radius:20px;
+box-shadow:0 28px 65px rgba(0,0,0,.45);
+display:flex;
+align-items:center;
+justify-content:center;
+text-align:center;
+padding:24px;
+font-size:18px;
+opacity:0;
+transform-origin:bottom center;
+transition:all 1.6s cubic-bezier(.25,1.4,.3,1);
+}
+
+.card span{
+font-size:22px;
+color:#6b2c91;
+}
+
+/* Start position */
+.card{
+top:50%;left:50%;
+transform:translate(-50%,-50%) scale(.6) rotateX(25deg);
+}
+
+/* End positions */
+.card1.show{top:10%;right:10%;left:auto;opacity:1;transform:rotate(6deg)}
+.card2.show{top:10%;left:10%;opacity:1;transform:rotate(-6deg)}
+.card3.show{bottom:10%;right:10%;top:auto;left:auto;opacity:1;transform:rotate(-4deg)}
+.card4.show{bottom:10%;left:10%;top:auto;opacity:1;transform:rotate(4deg)}
+.card5.show{top:36%;right:3%;left:auto;opacity:1;transform:rotate(8deg)}
+.card6.show{top:36%;left:3%;opacity:1;transform:rotate(-8deg)}
+</style>
+</head>
+
+<body>
+
+<!-- START OVERLAY -->
+<div id="startOverlay">
+✨ Tap anywhere to open your New Year surprise 🎆
+</div>
+
+<canvas id="fireworks"></canvas>
+<canvas id="confetti"></canvas>
+
+<audio id="music" loop>
+<source src="https://cdn.pixabay.com/audio/2022/10/30/audio_4c2c89b27b.mp3">
+</audio>
+
+<div class="envelope" id="envelope"></div>
+
+<div class="card card1"><span data-text="✨ Happy New Year {{name}} ✨"></span></div>
+<div class="card card2"><span data-text="🎆 New beginnings, new dreams, new magic 💖"></span></div>
+<div class="card card3"><span data-text="🌙 May peace, love & happiness follow you always 🌸"></span></div>
+<div class="card card4"><span data-text="💌 Thank you for being such a beautiful part of my life 🤍"></span></div>
+<div class="card card5"><span data-text="🌟 Health, success & endless smiles for you 🌈"></span></div>
+<div class="card card6"><span data-text="🥂 To memories made & magic yet to come ✨"></span></div>
+
+<script>
+/* CHANGE NAME HERE */
+const receiverName = "My Favourite Person 💖";
+
+/* Typing effect */
+function typeText(el,text){
+let i=0;
+el.innerHTML="";
+const interval=setInterval(()=>{
+el.innerHTML+=text[i];
+i++;
+if(i>=text.length)clearInterval(interval);
+},40);
+}
+
+/* Music overlay */
+const overlay=document.getElementById("startOverlay");
+const music=document.getElementById("music");
+
+overlay.onclick=()=>{
+music.volume=0.4;
+music.play();
+overlay.style.display="none";
+};
+
+/* Envelope logic */
+let step=0;
+const env=document.getElementById("envelope");
+const cards=document.querySelectorAll(".card");
+
+env.onclick=()=>{
+if(step<cards.length){
+cards[step].classList.add("show");
+const span=cards[step].querySelector("span");
+const text=span.dataset.text.replace("{{name}}",receiverName);
+typeText(span,text);
+step++;
+}
+};
+
+/* Fireworks */
+const fcanvas=document.getElementById("fireworks");
+const fctx=fcanvas.getContext("2d");
+fcanvas.width=innerWidth;fcanvas.height=innerHeight;
+let fireworks=[];
+class Firework{
+constructor(){
+this.x=Math.random()*fcanvas.width;
+this.y=fcanvas.height;
+this.ty=Math.random()*fcanvas.height/2;
+this.c=`hsl(${Math.random()*360},100%,60%)`;
+this.s=Math.random()*3+5;
+this.e=false;this.p=[];
+}
+u(){if(!this.e){this.y-=this.s;if(this.y<=this.ty)this.xp();}
+else this.p.forEach(a=>a.u());}
+xp(){this.e=true;for(let i=0;i<60;i++)this.p.push(new P(this.x,this.y,this.c));}
+d(){if(!this.e){fctx.fillStyle=this.c;fctx.fillRect(this.x,this.y,3,3);}
+else this.p.forEach(a=>a.d());}}
+class P{
+constructor(x,y,c){this.x=x;this.y=y;this.c=c;
+this.vx=(Math.random()-.5)*7;
+this.vy=(Math.random()-.5)*7;
+this.l=70;}
+u(){this.x+=this.vx;this.y+=this.vy;this.l--;}
+d(){fctx.fillStyle=this.c;fctx.fillRect(this.x,this.y,2,2);}
+}
+function fa(){
+fctx.clearRect(0,0,fcanvas.width,fcanvas.height);
+if(Math.random()<.06)fireworks.push(new Firework());
+fireworks.forEach(f=>{f.u();f.d();});
+fireworks=fireworks.filter(f=>!f.e||f.p.some(p=>p.l>0));
+requestAnimationFrame(fa);
+}
+fa();
+
+/* Confetti */
+const ccanvas=document.getElementById("confetti");
+const cctx=ccanvas.getContext("2d");
+ccanvas.width=innerWidth;ccanvas.height=innerHeight;
+let conf=[];
+for(let i=0;i<120;i++)
+conf.push({x:Math.random()*ccanvas.width,y:Math.random()*ccanvas.height,s:Math.random()*3+2});
+function ca(){
+cctx.clearRect(0,0,ccanvas.width,ccanvas.height);
+conf.forEach(p=>{
+p.y+=p.s;
+if(p.y>ccanvas.height)p.y=0;
+cctx.fillStyle="gold";
+cctx.fillRect(p.x,p.y,2,6);
+});
+requestAnimationFrame(ca);
+}
+ca();
+</script>
+
+</body>
+</html>
